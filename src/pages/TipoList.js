@@ -17,12 +17,8 @@ const TipoList = () => {
       const data = await getTipos();
       setTipos(data);
     } catch (error) {
-      Swal.fire('Error', 'No se pudo cargar los tipos', 'error');
+      Swal.fire('Error', `No se pudo cargar los tipos: ${error.response?.data?.error || error.message}`, 'error');
     }
-  };
-
-  const handleInputChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
@@ -40,22 +36,24 @@ const TipoList = () => {
       setCurrentId(null);
       fetchTipos();
     } catch (error) {
-      Swal.fire('Error', 'No se pudo guardar el tipo', 'error');
+      Swal.fire('Error', `No se pudo guardar el tipo: ${error.response?.data?.error || error.message}`, 'error');
     }
   };
 
   const handleEdit = (tipo) => {
+    setFormData({ nombre: tipo.nombre, descripcion: tipo.descripcion });
     setEditing(true);
     setCurrentId(tipo._id);
-    setFormData({ nombre: tipo.nombre, descripcion: tipo.descripcion });
   };
 
   const handleDelete = async (id) => {
     const result = await Swal.fire({
       title: '¿Estás seguro?',
-      text: 'No podrás revertir esta acción',
+      text: 'No podrás revertir esto',
       icon: 'warning',
       showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
       confirmButtonText: 'Sí, eliminar',
       cancelButtonText: 'Cancelar',
     });
@@ -66,84 +64,103 @@ const TipoList = () => {
         Swal.fire('Eliminado', 'El tipo ha sido eliminado', 'success');
         fetchTipos();
       } catch (error) {
-        Swal.fire('Error', 'No se pudo eliminar el tipo', 'error');
+        Swal.fire('Error', `No se pudo eliminar el tipo: ${error.response?.data?.error || error.message}`, 'error');
       }
     }
   };
 
   return (
-    <div>
-      <h2>Tipos</h2>
-      <form onSubmit={handleSubmit} className="mb-4">
-        <div className="form-group">
-          <label>Nombre</label>
-          <input
-            type="text"
-            className="form-control"
-            name="nombre"
-            value={formData.nombre}
-            onChange={handleInputChange}
-            required
-          />
-        </div>
-        <div className="form-group">
-          <label>Descripción</label>
-          <textarea
-            className="form-control"
-            name="descripcion"
-            value={formData.descripcion}
-            onChange={handleInputChange}
-          />
-        </div>
-        <button type="submit" className="btn btn-primary">
-          {editing ? 'Actualizar' : 'Crear'}
-        </button>
-        {editing && (
-          <button
-            type="button"
-            className="btn btn-secondary ml-2"
-            onClick={() => {
-              setEditing(false);
-              setFormData({ nombre: '', descripcion: '' });
-              setCurrentId(null);
-            }}
-          >
-            Cancelar
-          </button>
-        )}
-      </form>
+    <div className="container mt-5">
+      <h2 className="mb-4 text-light">Tipos</h2>
 
-      <table className="table table-bordered">
-        <thead>
-          <tr>
-            <th>Nombre</th>
-            <th>Descripción</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {tipos.map((tipo) => (
-            <tr key={tipo._id}>
-              <td>{tipo.nombre}</td>
-              <td>{tipo.descripcion}</td>
-              <td>
-                <button
-                  className="btn btn-warning btn-sm mr-2"
-                  onClick={() => handleEdit(tipo)}
-                >
-                  Editar
-                </button>
-                <button
-                  className="btn btn-danger btn-sm"
-                  onClick={() => handleDelete(tipo._id)}
-                >
-                  Eliminar
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {/* Formulario */}
+      <div className="card shadow-sm mb-5">
+        <div className="card-body">
+          <h5 className="card-title">{editing ? 'Editar Tipo' : 'Crear Tipo'}</h5>
+          <form onSubmit={handleSubmit}>
+            <div className="mb-3">
+              <label className="form-label">Nombre</label>
+              <input
+                type="text"
+                className="form-control"
+                value={formData.nombre}
+                onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+                required
+              />
+            </div>
+            <div className="mb-3">
+              <label className="form-label">Descripción</label>
+              <textarea
+                className="form-control"
+                value={formData.descripcion}
+                onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
+              />
+            </div>
+            <button type="submit" className="btn btn-primary">
+              {editing ? 'Actualizar' : 'Crear'}
+            </button>
+            {editing && (
+              <button
+                type="button"
+                className="btn btn-secondary ms-2"
+                onClick={() => {
+                  setFormData({ nombre: '', descripcion: '' });
+                  setEditing(false);
+                  setCurrentId(null);
+                }}
+              >
+                Cancelar
+              </button>
+            )}
+          </form>
+        </div>
+      </div>
+
+      {/* Tabla */}
+      <div className="card shadow-sm">
+        <div className="card-body">
+          <h5 className="card-title">Lista de Tipos</h5>
+          <div className="table-responsive">
+            <table className="table table-striped table-hover">
+              <thead className="thead-dark">
+                <tr>
+                  <th>Nombre</th>
+                  <th>Descripción</th>
+                  <th>Estado</th>
+                  <th>Fecha Creación</th>
+                  <th>Fecha Actualización</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {tipos.map((tipo) => (
+                  <tr key={tipo._id}>
+                    <td>{tipo.nombre}</td>
+                    <td>{tipo.descripcion}</td>
+                    <td>{tipo.estado}</td>
+                    <td>{new Date(tipo.fechaCreacion).toLocaleDateString()}</td>
+                    <td>{new Date(tipo.fechaActualizacion).toLocaleDateString()}</td>
+                    <td>
+                      <button
+                        className="btn btn-sm btn-warning me-2"
+                        onClick={() => handleEdit(tipo)}
+                      >
+                        Editar
+                      </button>
+                      <button
+                        className="btn btn-sm btn-danger"
+                        onClick={() => handleDelete(tipo._id)}
+                      >
+                        Eliminar
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
